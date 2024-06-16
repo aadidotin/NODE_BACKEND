@@ -1,8 +1,5 @@
 const express = require("express");
 const app = express();
-const constant = require('./utils/index.js')
-
-console.log(constant);
 
 app.use(express.json());
 
