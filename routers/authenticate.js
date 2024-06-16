@@ -10,7 +10,32 @@ route.get("/", (req, res) => {
 
 // SignIN API
 route.post("/login", (req, res) => {
-    res.send({ success: true, message: "This Is main route" });
+    let err = [];
+    let { email, password } = res.body;
+
+    if (email == undefined || email == null || email.trim() == '') err.push("Email is Empty");
+    if (!constant.validateEmail(email)) err.push("Please Enter a Valid Email Address");
+    if (password == undefined || password == null || password.trim() == '') err.push("Password is Empty");
+
+    if (err.length > 0) {
+        res.status(417).send({ success: false, errors: { error: err[0] } });
+    }
+    else {
+        conn.query("SELECT * FROM registration WHERE email = ?", [email], async (error, result) => {
+            try {
+                if (result.length == 0) {
+                    res.status(417).send({ success: false, errors: { error: "Account Not Registered" } });
+                }
+                else {
+                }
+            } catch (error) {
+                res.status(503).send({ success: false, errors: { error: error.message } })
+            }
+        })
+    }
+
+
+    // res.send({ success: true, message: "This Is main route" });
 });
 
 // SignUP API
