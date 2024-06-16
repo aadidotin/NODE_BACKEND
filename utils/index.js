@@ -9,7 +9,7 @@ class common {
     }
 }
 
-// const constant = new common();
+const constant = new common();
 // console.log(constant);
 
-module.exports = common;
+module.exports = constant;

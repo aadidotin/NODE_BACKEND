@@ -2,6 +2,7 @@ const express = require("express");
 const route = express.Router();
 const bcrypt = require("bcryptjs");
 const conn = require('../database/mysql');
+const constant = require('../utils/index');
 
 route.get("/", (req, res) => {
     res.send({ success: true, message: "This Is main route" });
@@ -27,12 +28,12 @@ route.post("/signup", async (req, res) => {
             }
             else {
                 const pdata = JSON.stringify({ name: fullname, image: [], img_check: false, contact_num: "" });
-                const obj_password = JSON.stringify({ login_pass_key: password, login_password: hPassword, password_changed: false, account_activation: true, changed_password_date: "", otp: "", account_created_date: new Date().getTime() });
+                const obj_password = JSON.stringify({ login_pass_key: password, login_password: hPassword, password_changed: false, account_activation: true, changed_password_date: "", otp: "", account_created_date: constant.todaydatetime });
 
-                const logs = JSON.stringify([{ addeddate: new Date().getTime(), "description": "New Superadmin Added" }]);
+                const logs = JSON.stringify([{ addeddate: constant.todaydatetime, "description": "New Superadmin Added" }]);
 
                 conn.query("INSERT INTO registration (`unique_id`,`account_type`,`email`,`p_data`,`login_info`,`status`,`logs`) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    [unique, 1, email, pdata, obj_password, 1, logs],
+                    [constant.uniqueid, 1, email, pdata, obj_password, 1, logs],
                     (error, result) => {
                         res.status(200).send({ success: true, message: "User Added Successfully" })
                     }

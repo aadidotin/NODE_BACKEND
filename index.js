@@ -1,8 +1,6 @@
 const express = require("express");
 const app = express();
-const { common } = require('./utils/constant.js');
-
-const constant = new common();
+const constant = require('./utils/index.js')
 
 console.log(constant);
 
