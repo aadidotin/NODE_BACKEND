@@ -19,13 +19,13 @@ route.post("/login", (req, res) => {
     if (password == undefined || password == null || password.trim() == '') err.push("Password is Empty");
 
     if (err.length > 0) {
-        res.status(417).send({ success: false, errors: { error: err[0] } });
+        res.status(401).send({ success: false, errors: { error: err[0] } });
     }
     else {
         conn.query("SELECT login_info, p_data, email, account_type  FROM registration WHERE email = ? AND status = 1", [email], async (error, result) => {
             try {
                 if (result.length == 0) {
-                    res.status(417).send({
+                    res.status(401).send({
                         success: false,
                         errors: {
                             error: "Account Not Registered"
@@ -80,7 +80,7 @@ route.post("/signup", async (req, res) => {
     if (password.length < 8) err.push("Password must be atleast 8 Characters");
 
     if (err.length > 0) {
-        res.status(417).send({ success: false, errors: { error: err[0] } });
+        res.status(401).send({ success: false, errors: { error: err[0] } });
     }
     else {
         conn.query("SELECT email FROM registration WHERE email = ?", [email], async (error, result) => {
