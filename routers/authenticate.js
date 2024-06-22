@@ -48,10 +48,11 @@ route.post("/login", (req, res) => {
                         res.send({ success: false, errors: { error: err[0] } })
                     }
                     else {
-                        const authtoken = jwt.sign({ email: result[0]?.email, name: p_data?.name, account_type: result[0]?.account_type }, process.env.JWT_SECRET_CODE);
+                        const authtoken = jwt.sign({ email: result[0]?.email, name: p_data?.name, account_type: result[0]?.account_type }, process.env.JWT_SECRET_CODE, { expiresIn: '12h' });
                         res.send({
                             success: true,
                             message: "Logged In Successfully",
+                            image: p_data?.image?.url,
                             authtoken: authtoken
                         })
                     }
@@ -101,10 +102,11 @@ route.post("/signup", async (req, res) => {
                     conn.query("INSERT INTO registration (`unique_id`,`account_type`,`email`,`p_data`,`login_info`,`status`,`logs`) VALUES (?, ?, ?, ?, ?, ?, ?)",
                         [constant.uniqueid, 1, email, pdata, obj_password, 1, logs],
                         (error, result) => {
-                            const authtoken = jwt.sign({ email, name: fullname, account_type: 1 }, process.env.JWT_SECRET_CODE);
+                            const authtoken = jwt.sign({ email, name: fullname, account_type: 1 }, process.env.JWT_SECRET_CODE, { expiresIn: '12h' });
                             res.send({
                                 success: true,
                                 message: "User Added Successfully",
+                                image: "",
                                 authtoken
                             })
                         }
