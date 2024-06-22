@@ -19,13 +19,13 @@ route.post("/login", (req, res) => {
     if (password == undefined || password == null || password.trim() == '') err.push("Password is Empty");
 
     if (err.length > 0) {
-        res.status(401).send({ success: false, errors: { error: err[0] } });
+        res.send({ success: false, errors: { error: err[0] } });
     }
     else {
         conn.query("SELECT login_info, p_data, email, account_type  FROM registration WHERE email = ? AND status = 1", [email], async (error, result) => {
             try {
                 if (result.length == 0) {
-                    res.status(401).send({
+                    res.send({
                         success: false,
                         errors: {
                             error: "Account Not Registered"
@@ -45,11 +45,11 @@ route.post("/login", (req, res) => {
                     }
 
                     if (err.length > 0) {
-                        res.status(401).send({ success: false, errors: { error: err[0] } })
+                        res.send({ success: false, errors: { error: err[0] } })
                     }
                     else {
                         const authtoken = jwt.sign({ email: result[0]?.email, name: p_data?.name, account_type: result[0]?.account_type }, process.env.JWT_SECRET_CODE);
-                        res.status(200).send({
+                        res.send({
                             success: true,
                             message: "Logged In Successfully",
                             authtoken: authtoken
@@ -62,7 +62,7 @@ route.post("/login", (req, res) => {
 
                 }
             } catch (error) {
-                res.status(503).send({ success: false, errors: { error: error.message } })
+                res.send({ success: false, errors: { error: error.message } })
             }
         })
     }
@@ -80,13 +80,13 @@ route.post("/signup", async (req, res) => {
     if (password.length < 8) err.push("Password must be atleast 8 Characters");
 
     if (err.length > 0) {
-        res.status(401).send({ success: false, errors: { error: err[0] } });
+        res.send({ success: false, errors: { error: err[0] } });
     }
     else {
         conn.query("SELECT email FROM registration WHERE email = ?", [email], async (error, result) => {
             try {
                 if (result.length > 0) {
-                    res.status(417).send({ success: false, errors: { error: "User Already Exist" } })
+                    res.send({ success: false, errors: { error: "User Already Exist" } })
                 }
                 else {
                     let gSalt = await bcrypt.genSalt(10);
@@ -102,7 +102,7 @@ route.post("/signup", async (req, res) => {
                         [constant.uniqueid, 1, email, pdata, obj_password, 1, logs],
                         (error, result) => {
                             const authtoken = jwt.sign({ email, name: fullname, account_type: 1 }, process.env.JWT_SECRET_CODE);
-                            res.status(200).send({
+                            res.send({
                                 success: true,
                                 message: "User Added Successfully",
                                 authtoken
@@ -111,7 +111,7 @@ route.post("/signup", async (req, res) => {
                     )
                 }
             } catch (error) {
-                res.status(503).send({ success: false, errors: { error: error.message } })
+                res.send({ success: false, errors: { error: error.message } })
             }
         })
     }
