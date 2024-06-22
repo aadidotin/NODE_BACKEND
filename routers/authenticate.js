@@ -101,7 +101,12 @@ route.post("/signup", async (req, res) => {
                     conn.query("INSERT INTO registration (`unique_id`,`account_type`,`email`,`p_data`,`login_info`,`status`,`logs`) VALUES (?, ?, ?, ?, ?, ?, ?)",
                         [constant.uniqueid, 1, email, pdata, obj_password, 1, logs],
                         (error, result) => {
-                            res.status(200).send({ success: true, message: "User Added Successfully" })
+                            const authtoken = jwt.sign({ email, name: fullname, account_type: 1 }, process.env.JWT_SECRET_CODE);
+                            res.status(200).send({
+                                success: true,
+                                message: "User Added Successfully",
+                                authtoken
+                            })
                         }
                     )
                 }
