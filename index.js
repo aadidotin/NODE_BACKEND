@@ -11,7 +11,11 @@ app.get("/", (req, res) => {
     }
 });
 
+// Authentication Router
 app.use("/api/auth", require("./routers/authenticate.js"));
+
+// Data Input Router
+app.use("/api/student", require("./routers/students.js"));
 
 app.listen(4000, () => {
     console.log("Server is running at http://localhost:4000");

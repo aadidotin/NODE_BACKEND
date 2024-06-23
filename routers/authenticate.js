@@ -9,6 +9,61 @@ route.get("/", (req, res) => {
     res.send({ success: true, message: "This Is main route" });
 });
 
+// SignUP API
+route.post("/signup", async (req, res) => {
+    let err = [];
+    let { fullname, email, password } = req.body;
+
+    if (fullname == undefined || fullname == null || fullname.trim() == '') err.push("Name is Empty");
+    if (email == undefined || email == null || email.trim() == '') err.push("Email is Empty");
+    if (!constant.validateEmail(email)) err.push("Please Enter a Valid Email Address");
+    if (password == undefined || password == null || password.trim() == '') err.push("Password is Empty");
+    if (password && password.length < 8) err.push("Password must be atleast 8 Characters");
+
+    if (err.length > 0) {
+        res.send({ success: false, errors: { error: err[0] } });
+    }
+    else {
+        conn.query("SELECT email FROM registration WHERE email = ?", [email], async (error, result) => {
+            try {
+                if (result.length > 0) {
+                    res.status(417).send("User Already Exist")
+                }
+                else {
+                    let gSalt = await bcrypt.genSalt(10);
+                    let hPassword = await bcrypt.hash(password, gSalt);
+                    // let anotherWay = await bcrypt.hash(password, 10);    // Here We can add a number OR string on the place of salt and that will auto generate salt and hash it.
+
+                    const pdata = JSON.stringify({ name: fullname, image: [], img_check: false, contact_num: "" });
+                    const obj_password = JSON.stringify({ login_pass_key: password, login_password: hPassword, password_changed: false, account_activation: true, changed_password_date: "", otp: "", account_created_date: constant.todaydatetime });
+
+                    const logs = JSON.stringify([{ addeddate: constant.todaydatetime, "description": "New Superadmin Added" }]);
+
+                    const unique_id = constant.uniqueid;
+                    conn.query("INSERT INTO registration (`unique_id`,`account_type`,`email`,`p_data`,`login_info`,`status`,`logs`) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        [unique_id, 1, email, pdata, obj_password, 1, logs],
+                        (error, result) => {
+                            const authtoken = jwt.sign({ email, name: fullname, account_type: 1, unique_id }, process.env.JWT_SECRET_CODE, { expiresIn: '12h' });
+                            res.send({
+                                success: true,
+                                message: "User Added Successfully",
+                                data: {
+                                    name: fullname,
+                                    image: "",
+                                    account_type: 1,
+                                    authtoken
+                                }
+                            })
+                        }
+                    )
+                }
+            } catch (error) {
+                res.send({ success: false, errors: { error: error.message } })
+            }
+        })
+    }
+});
+
 // SignIN API
 route.post("/login", (req, res) => {
     let err = [];
@@ -22,7 +77,7 @@ route.post("/login", (req, res) => {
         res.send({ success: false, errors: { error: err[0] } });
     }
     else {
-        conn.query("SELECT login_info, p_data, email, account_type  FROM registration WHERE email = ? AND status = 1", [email], async (error, result) => {
+        conn.query("SELECT login_info, p_data, email, account_type, unique_id  FROM registration WHERE email = ? AND status = 1", [email], async (error, result) => {
             try {
                 if (result.length == 0) {
                     res.send({
@@ -48,12 +103,16 @@ route.post("/login", (req, res) => {
                         res.send({ success: false, errors: { error: err[0] } })
                     }
                     else {
-                        const authtoken = jwt.sign({ email: result[0]?.email, name: p_data?.name, account_type: result[0]?.account_type }, process.env.JWT_SECRET_CODE, { expiresIn: '12h' });
+                        const authtoken = jwt.sign({ email: result[0]?.email, name: p_data?.name, account_type: result[0]?.account_type, unique_id: result[0]?.unique_id }, process.env.JWT_SECRET_CODE, { expiresIn: '12h' });
                         res.send({
                             success: true,
                             message: "Logged In Successfully",
-                            image: p_data?.image?.url,
-                            authtoken: authtoken
+                            data: {
+                                name: p_data?.name,
+                                image: p_data.image.url ?? "",
+                                account_type: result[0]?.account_type,
+                                authtoken: authtoken
+                            }
                         })
                     }
 
@@ -61,56 +120,6 @@ route.post("/login", (req, res) => {
                     // let comp = bcrypt.compareSync(password, hPassword)
                     // console.log(comp);
 
-                }
-            } catch (error) {
-                res.send({ success: false, errors: { error: error.message } })
-            }
-        })
-    }
-});
-
-// SignUP API
-route.post("/signup", async (req, res) => {
-    let err = [];
-    let { fullname, email, password } = req.body;
-
-    if (fullname == undefined || fullname == null || fullname.trim() == '') err.push("Name is Empty");
-    if (email == undefined || email == null || email.trim() == '') err.push("Email is Empty");
-    if (!constant.validateEmail(email)) err.push("Please Enter a Valid Email Address");
-    if (password == undefined || password == null || password.trim() == '') err.push("Password is Empty");
-    if (password.length < 8) err.push("Password must be atleast 8 Characters");
-
-    if (err.length > 0) {
-        res.send({ success: false, errors: { error: err[0] } });
-    }
-    else {
-        conn.query("SELECT email FROM registration WHERE email = ?", [email], async (error, result) => {
-            try {
-                if (result.length > 0) {
-                    res.send({ success: false, errors: { error: "User Already Exist" } })
-                }
-                else {
-                    let gSalt = await bcrypt.genSalt(10);
-                    let hPassword = await bcrypt.hash(password, gSalt);
-                    // let anotherWay = await bcrypt.hash(password, 10);    // Here We can add a number OR string on the place of salt and that will auto generate salt and hash it.
-
-                    const pdata = JSON.stringify({ name: fullname, image: [], img_check: false, contact_num: "" });
-                    const obj_password = JSON.stringify({ login_pass_key: password, login_password: hPassword, password_changed: false, account_activation: true, changed_password_date: "", otp: "", account_created_date: constant.todaydatetime });
-
-                    const logs = JSON.stringify([{ addeddate: constant.todaydatetime, "description": "New Superadmin Added" }]);
-
-                    conn.query("INSERT INTO registration (`unique_id`,`account_type`,`email`,`p_data`,`login_info`,`status`,`logs`) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                        [constant.uniqueid, 1, email, pdata, obj_password, 1, logs],
-                        (error, result) => {
-                            const authtoken = jwt.sign({ email, name: fullname, account_type: 1 }, process.env.JWT_SECRET_CODE, { expiresIn: '12h' });
-                            res.send({
-                                success: true,
-                                message: "User Added Successfully",
-                                image: "",
-                                authtoken
-                            })
-                        }
-                    )
                 }
             } catch (error) {
                 res.send({ success: false, errors: { error: error.message } })
